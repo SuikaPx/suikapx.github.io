@@ -113,7 +113,7 @@
   <nav class="site-state">
       <div class="site-state-item site-state-posts">
         <a href="/archives/">
-          <span class="site-state-item-count">2</span>
+          <span class="site-state-item-count">1</span>
           <span class="site-state-item-name">posts</span>
         </a>
       </div>
@@ -162,7 +162,7 @@
     </span>
       <header class="post-header">
         <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/12/21/games202-assignment1/" class="post-title-link" itemprop="url">games202-assignment1</a>
+          <a href="/2023/12/21/games202-assignment1/" class="post-title-link" itemprop="url">GAMES202 高质量实时渲染 作业 1 解答 (Assignment1)</a>
         </h2>
 
         <div class="post-meta-container">
@@ -174,7 +174,7 @@
       <span class="post-meta-item-text">Posted on</span>
       
 
-      <time title="Created: 2023-12-21 14:21:05 / Modified: 16:55:50" itemprop="dateCreated datePublished" datetime="2023-12-21T14:21:05+08:00">2023-12-21</time>
+      <time title="Created: 2023-12-21 14:21:05 / Modified: 21:46:57" itemprop="dateCreated datePublished" datetime="2023-12-21T14:21:05+08:00">2023-12-21</time>
     </span>
 
   
@@ -187,175 +187,26 @@
     
     
     <div class="post-body" itemprop="articleBody">
-          <h1 id="1-总览"><a href="#1-总览" class="headerlink" title="1 总览"></a>1 总览</h1><ol>
-<li>实现 ShadowMap 算法</li>
-<li>实现 PCF 算法</li>
-<li>实现 PCSS 算法</li>
-<li>提高：实现多光源和动态物体</li>
+          <p>GAMES202 课程的作业难度相较于 GAMES101
+有了显著提高，几乎花了我一整天的时间才将作业1完成。之后我阅读了几篇相关的解答文章，发现大家在算法的具体实现上存在差异。有些解答修改了函数接收的参数数量，我感觉这可能会与出题者的初衷不符。因此，我打算分享我自己的解题过程，力求尽可能贴合作业提供的函数构造方法，希望能给后续学习这门课程的同学们提供一个参考。</p>
+<p>本篇文章将主要涵盖以下内容：</p>
+<ol type="1">
+<li>ShadowMap 算法的实现</li>
+<li>PCF 算法的实现</li>
+<li>PCSS 算法的实现</li>
+<li>提高：多光源和动态物体</li>
+<li>TODO：自适应 Bias 算法的实现</li>
+<li>TODO：VSSM 算法的实现</li>
 </ol>
-<h1 id="2-注意事项"><a href="#2-注意事项" class="headerlink" title="2 注意事项"></a>2 注意事项</h1><ul>
-<li><p>作业框架分析请见：[TODO]</p>
-</li>
-<li><p>作业代码及我的解答：[GitHub Link]</p>
-</li>
-<li><p>默认作业框架可能会出现加载不出模型的情况，解决方法为在 index.html 第 4 行的 <head> 前加上以下内容对模型进行预加载，相关讨论请见：<a target="_blank" rel="noopener" href="https://games-cn.org/forums/topic/zuoye0-jieguobuwendingyoushimoxingxianshibuquan/">作业0 结果不稳定，有时模型显示不全 – 计算机图形学与混合现实在线平台 (games-cn.org)</a></p>
-  <figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// index.html</span></span><br><span class="line"></span><br><span class="line">&lt;link</span><br><span class="line">    rel=<span class="string">&quot;preload&quot;</span></span><br><span class="line">    href=<span class="string">&quot;assets/mary/MC003_Kozakura_Mari.png&quot;</span></span><br><span class="line">    <span class="keyword">as</span>=<span class="string">&quot;image&quot;</span></span><br><span class="line">    type=<span class="string">&quot;image/png&quot;</span></span><br><span class="line">    crossorigin</span><br><span class="line">  /&gt;</span><br></pre></td></tr></table></figure>
-</li>
-<li><p>未正确加载的模型</p>
-<p>  <img src="/images/games202-assignment1/Untitled.png" alt="Untitled"></p>
-</li>
-<li><p>未正确加载的模型</p>
-<p>  <img src="/images/games202-assignment1/Untitled%201.png" alt="Untitled"></p>
-</li>
-</ul>
-<h1 id="3-实现"><a href="#3-实现" class="headerlink" title="3 实现"></a>3 实现</h1><h2 id="3-1-ShadowMap-算法"><a href="#3-1-ShadowMap-算法" class="headerlink" title="3-1 ShadowMap 算法"></a>3-1 ShadowMap 算法</h2><p>根据作业要求，对于 ShadowMap 的实现有两个任务点需要完成：</p>
-<ol>
-<li>DirectionalLight.js 中的 <code>CalcLightMVP(translate, scale)</code> 函数。</li>
-<li>phongFragment.glsl 中的 <code>useShadowMap(sampler2D shadowMap, vec4 shadowCoord)</code> 函数。</li>
-</ol>
-<p>下面将依次进行分析。</p>
-<h3 id="3-1-1-DirectionalLight-js-中的-CalcLightMVP-translate-scale-函数"><a href="#3-1-1-DirectionalLight-js-中的-CalcLightMVP-translate-scale-函数" class="headerlink" title="3-1-1 DirectionalLight.js 中的 CalcLightMVP(translate, scale) 函数"></a>3-1-1 DirectionalLight.js 中的 CalcLightMVP(translate, scale) 函数</h3><p>这个就是GAMES101中学的MVP变换，不过这次我们在框架下可以直接使用内置的函数，不用手算函数了。所以实际的实现也很简单，如下所示，需要注意的是我们一般是先做Translation，再Rotation，再Scale，用矩阵来表示就是 $SRTx$（从右向左依次施加到x上）。</p>
-<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// DirectionalLight.js</span></span><br><span class="line"></span><br><span class="line"><span class="title class_">CalcLightMVP</span>(translate, scale) &#123;</span><br><span class="line">  <span class="keyword">let</span> lightMVP = mat4.<span class="title function_">create</span>();</span><br><span class="line">  <span class="keyword">let</span> modelMatrix = mat4.<span class="title function_">create</span>();</span><br><span class="line">  <span class="keyword">let</span> viewMatrix = mat4.<span class="title function_">create</span>();</span><br><span class="line">  <span class="keyword">let</span> projectionMatrix = mat4.<span class="title function_">create</span>();</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Solution starts here</span></span><br><span class="line"></span><br><span class="line">  <span class="comment">// Model transform</span></span><br><span class="line">  mat4.<span class="title function_">translate</span>(modelMatrix, modelMatrix, translate);</span><br><span class="line">  mat4.<span class="title function_">scale</span>(modelMatrix, modelMatrix, scale);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// View transform</span></span><br><span class="line">  mat4.<span class="title function_">lookAt</span>(viewMatrix, <span class="variable language_">this</span>.<span class="property">lightPos</span>, <span class="variable language_">this</span>.<span class="property">focalPoint</span>, <span class="variable language_">this</span>.<span class="property">lightUp</span>);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Projection transform</span></span><br><span class="line">  <span class="keyword">var</span> r = <span class="number">100</span>;</span><br><span class="line">  <span class="keyword">var</span> l = -r;</span><br><span class="line">  <span class="keyword">var</span> t = <span class="number">100</span>;</span><br><span class="line">  <span class="keyword">var</span> b = -t;</span><br><span class="line">  <span class="keyword">var</span> n = <span class="number">0</span>;</span><br><span class="line">  <span class="keyword">var</span> f = <span class="number">200</span>;</span><br><span class="line">  mat4.<span class="title function_">ortho</span>(projectionMatrix, l, r, b, t, n, f);</span><br><span class="line"></span><br><span class="line">  <span class="comment">// Solution ends here</span></span><br><span class="line"></span><br><span class="line">  mat4.<span class="title function_">multiply</span>(lightMVP, projectionMatrix, viewMatrix);</span><br><span class="line">  mat4.<span class="title function_">multiply</span>(lightMVP, lightMVP, modelMatrix);</span><br><span class="line"></span><br><span class="line">  <span class="keyword">return</span> lightMVP;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>这里正交投影矩阵参数的选取是可以自己选定的，基本准测是确保裁剪平面足够大以包含所有重要的场景元素，同时又不要太大以避免不必要的性能损失。</p>
-<p>在engine.js中可以看到光源和物体在场景中的坐标</p>
-<figure class="highlight jsx"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// engine.js</span></span><br><span class="line"></span><br><span class="line"><span class="keyword">let</span> lightPos = [<span class="number">0</span>, <span class="number">80</span>, <span class="number">80</span>];</span><br><span class="line"><span class="keyword">let</span> focalPoint = [<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>];</span><br><span class="line"><span class="keyword">let</span> lightUp = [<span class="number">0</span>, <span class="number">1</span>, <span class="number">0</span>]</span><br><span class="line"><span class="keyword">let</span> floorTransform = <span class="title function_">setTransform</span>(<span class="number">0</span>, <span class="number">0</span>, -<span class="number">30</span>, <span class="number">4</span>, <span class="number">4</span>, <span class="number">4</span>);</span><br><span class="line"><span class="keyword">let</span> obj1Transform = <span class="title function_">setTransform</span>(<span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>, <span class="number">20</span>, <span class="number">20</span>, <span class="number">20</span>);</span><br><span class="line"><span class="keyword">let</span> obj2Transform = <span class="title function_">setTransform</span>(<span class="number">40</span>, <span class="number">0</span>, -<span class="number">40</span>, <span class="number">10</span>, <span class="number">10</span>, <span class="number">10</span>);</span><br></pre></td></tr></table></figure>
-
-<p>以此为根据可以选出一组比较合理的参数，同时我们尽量保证 <code>l = -r</code> 和 <code>b = -t</code> 方便后面我们对坐标进行变换。</p>
-<h3 id="3-1-2-phongFragment-glsl-中的-useShadowMap-sampler2D-shadowMap-vec4-shadowCoord-函数"><a href="#3-1-2-phongFragment-glsl-中的-useShadowMap-sampler2D-shadowMap-vec4-shadowCoord-函数" class="headerlink" title="3-1-2 phongFragment.glsl 中的 useShadowMap(sampler2D shadowMap, vec4 shadowCoord) 函数"></a>3-1-2 phongFragment.glsl 中的 useShadowMap(sampler2D shadowMap, vec4 shadowCoord) 函数</h3><p> <code>useShadowMap</code> 函数负责在阴影映射（ShadowMap）中查询当前片段（Fragment）的深度值，并将其与转换到光源空间（Light Space）的深度值进行比较，以返回可见性（Visibility）项。在 OpenGL 中，通常通过对深度纹理进行采样并将采样值与片段的深度值进行比较来实现这一点。</p>
-<p>在这个函数中，我们需要考虑以下几个步骤：</p>
-<ol>
-<li><strong>坐标转换</strong>：将阴影坐标（<code>shadowCoord</code>）从裁剪空间转换到 [0,1] 的规范化设备坐标（Normalized Device Coordinates, NDC）。这是因为深度纹理的坐标是在 [0,1] 范围内。由于后面PCF和PCSS的实现都需要做这一步，所以我们可以先在<code>main</code>函数中进行转换，然后将转换后的坐标传给函数直接使用。</li>
-<li><strong>深度比较</strong>：使用转换后的坐标从阴影纹理中采样深度值，然后将其与片段的深度值（即 <code>shadowCoord.z</code>）进行比较。</li>
-<li><strong>可见性计算</strong>：如果片段深度大于从阴影映射中采样的深度（意味着片段在光源视角下被其他物体遮挡），则该片段位于阴影中，可见性为 0。否则，它是可见的，可见性为 1。</li>
-</ol>
-<p>以下是 <code>useShadowMap</code> 函数的实现代码：</p>
-<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// phongFragment.glsl</span></span><br><span class="line"></span><br><span class="line"><span class="type">float</span> useShadowMap(<span class="type">sampler2D</span> shadowMap, <span class="type">vec4</span> shadowCoord) &#123;</span><br><span class="line">    <span class="comment">// Sample the depth value from the shadow map.</span></span><br><span class="line">    <span class="type">float</span> closestDepth = <span class="built_in">texture2D</span>(shadowMap, shadowCoord.xy).r;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Check if the current fragment is in the shadow.</span></span><br><span class="line">    <span class="type">float</span> shadow = <span class="number">1.0</span>;</span><br><span class="line">    <span class="keyword">if</span> (shadowCoord.z &gt; closestDepth + EPS) &#123;</span><br><span class="line">        shadow = <span class="number">0.0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> shadow;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>在上述代码中，<code>projCoords.z</code> 是片段的深度值，而 <code>closestDepth</code> 是阴影图中采样得到的深度值。两者比较的结果决定了片段是否处于阴影中，从而影响最终的可见性。这里的 <code>EPS</code> 是用来减少阴影粉刺（Shadow Acne）的一个小偏差值，默认是<code>1e-3</code>，我调整成了<code>2e-2</code>感觉效果比较好</p>
-<aside>
-📃 `EPS` 定义在文件最上面，别忘了改，默认值1e-3会有很严重的阴影粉刺现象（你可以试试看）。
-
-</aside>
-
-<p><code>main</code>函数中我们需要实现坐标转换和启用<code>useShadowMap</code>（用哪种方法启用哪个，其它方法注释掉即可，后面就不赘述了），如下所示：</p>
-<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// phongFragment.glsl</span></span><br><span class="line"></span><br><span class="line"><span class="type">void</span> main(<span class="type">void</span>) &#123;</span><br><span class="line">	<span class="comment">// Transform to NDC [0, 1].</span></span><br><span class="line">  <span class="type">vec3</span> shadowCoord = vPositionFromLight.xyz / vPositionFromLight.w;</span><br><span class="line">  shadowCoord = shadowCoord * <span class="number">0.5</span> + <span class="number">0.5</span>;</span><br><span class="line"></span><br><span class="line">  <span class="type">float</span> visibility;</span><br><span class="line">	<span class="comment">// Enable useShadowMap(), comment unused methods.</span></span><br><span class="line">  visibility = useShadowMap(uShadowMap, <span class="type">vec4</span>(shadowCoord, <span class="number">1.0</span>));</span><br><span class="line">  <span class="comment">//visibility = PCF(uShadowMap, vec4(shadowCoord, 1.0));</span></span><br><span class="line">  <span class="comment">//visibility = PCSS(uShadowMap, vec4(shadowCoord, 1.0));</span></span><br><span class="line"></span><br><span class="line">  <span class="type">vec3</span> phongColor = blinnPhong();</span><br><span class="line"></span><br><span class="line">	<span class="comment">// Don&#x27;t foget this line!</span></span><br><span class="line">  <span class="built_in">gl_FragColor</span> = <span class="type">vec4</span>(phongColor * visibility, <span class="number">1.0</span>);</span><br><span class="line">  <span class="comment">//gl_FragColor = vec4(phongColor, 1.0);</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>到此我们就完成了 ShadowMap 算法的实现，效果如下</p>
-<p><img src="/images/games202-assignment1/Untitled%202.png" alt="Untitled"></p>
-<h2 id="3-2-PCF-算法"><a href="#3-2-PCF-算法" class="headerlink" title="3-2 PCF 算法"></a>3-2 PCF 算法</h2><p>实现 <code>PCF</code> 函数的步骤大概可以归纳为下面几点：</p>
-<ol>
-<li><strong>采样点生成</strong>：使用泊松圆盘采样或均匀圆盘进行采样。然后用 <code>filterSize</code> 乘上这些采样，得到一系列坐标偏移值，将原始 <code>shadowCoord</code> 加上这些坐标偏移值，就能得到采样点的坐标。</li>
-<li><strong>深度比较和累积</strong>：对于每个采样点，计算它在阴影图上的深度值，并与当前片段的深度值进行比较。根据比较结果累积被遮挡的采样点数量。</li>
-<li><strong>平均化处理</strong>：将被遮挡的采样点数量除以采样点总数，得到最终的阴影强度。</li>
-</ol>
-<p>下面是代码实现：</p>
-<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// phongFragment.glsl</span></span><br><span class="line"></span><br><span class="line"><span class="type">float</span> PCF(<span class="type">sampler2D</span> shadowMap, <span class="type">vec4</span> shadowCoord, <span class="type">float</span> filterSize) &#123;</span><br><span class="line">    <span class="comment">// Perform Sampling</span></span><br><span class="line">    poissonDiskSamples(shadowCoord.xy);</span><br><span class="line">    <span class="comment">//uniformDiskSamples(shadowCoord.xy);</span></span><br><span class="line"></span><br><span class="line">		<span class="comment">// Shadow Accumulation</span></span><br><span class="line">		<span class="type">float</span> shadow = <span class="number">0.0</span>;</span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; NUM_SAMPLES; ++i) &#123;</span><br><span class="line">				<span class="comment">// Calculate the coordinates of the current sample point</span></span><br><span class="line">        <span class="type">vec2</span> samplePos = shadowCoord.xy + poissonDisk[i] * filterSize;</span><br><span class="line"></span><br><span class="line">				<span class="comment">// Sample the depth value from the shadow map</span></span><br><span class="line">        <span class="type">float</span> sampleDepth = unpack( <span class="built_in">texture2D</span>( shadowMap, samplePos ) );</span><br><span class="line"></span><br><span class="line">				<span class="comment">// Depth comparison</span></span><br><span class="line">        <span class="keyword">if</span> (shadowCoord.z &gt; sampleDepth + EPS) &#123;</span><br><span class="line">            shadow += <span class="number">1.0</span>;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">		</span><br><span class="line">		<span class="comment">// Calculate the average shadow intensity</span></span><br><span class="line">    shadow /= <span class="type">float</span>(NUM_SAMPLES);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> <span class="number">1.0</span> - shadow;  <span class="comment">// 1 means full illumination, 0 means complete shadow</span></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>在这个实现中，<code>filterSize</code> 是滤波核的大小，用于控制阴影的软化程度，这个参数在原本的<code>main</code>里没有写，但是作业要求上是有这个参数的，所以我们手动在<code>main</code>函数里加一下这个参数，我设置为了 <code>0.01</code>。</p>
-<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// phongFragment.glsl</span></span><br><span class="line"></span><br><span class="line">visibility = PCF(uShadowMap, <span class="type">vec4</span>(shadowCoord, <span class="number">1.0</span>), <span class="number">0.01</span>);</span><br></pre></td></tr></table></figure>
-
-<p><img src="/images/games202-assignment1/Untitled%203.png" alt="Untitled"></p>
-<p>可以看到阴影的边缘变得模糊了，但是噪声比较大，可以将采样数调高获得更好的阴影质量，下面是将 <code>NUM_SAMPLES</code>（定义在文件最开头）从默认的<code>20</code>调成<code>50</code>后的效果，可以看到噪声明显变小了。</p>
-<p><img src="/images/games202-assignment1/Untitled%204.png" alt="Untitled"></p>
-<p>至此我们实现了PCF算法。</p>
-<h2 id="3-3-PCSS-算法"><a href="#3-3-PCSS-算法" class="headerlink" title="3-3 PCSS 算法"></a>3-3 PCSS 算法</h2><p>要完善 <code>findBlocker</code> 和 <code>PCSS</code> (Percentage Closer Soft Shadows) 函数，我们需要计算遮挡物的平均深度，并使用这个信息来确定伴影（Penumbra）的直径，进而调整 <code>PCF</code> 函数的滤波核大小。<code>findBlocker</code> 函数负责寻找可能遮挡光线的物体并计算它们的平均深度，而 <code>PCSS</code> 函数则使用这个平均深度来计算伴影直径，并将其传递给 <code>PCF</code> 函数。</p>
-<p>作业文档中说了实现这个函数的时候我们可以自己定义诸如光源宽度、采样数之类的参数，我的选择如下：</p>
-<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// phongFragment.glsl</span></span><br><span class="line"></span><br><span class="line"><span class="meta">#define BLOCKER_SEARCH_RADIUS 0.1;</span></span><br><span class="line"><span class="meta">#define LIGHT_SIZE 0.05;</span></span><br></pre></td></tr></table></figure>
-
-<p><code>findBlocker</code> 的实现和<code>PCH</code>很类似，都是对一定范围内的采样点查询是否被遮挡，只不过<code>findBlocker</code> 返回的是平均被遮挡的深度，那么代码如下：</p>
-<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// phongFragment.glsl</span></span><br><span class="line"></span><br><span class="line"><span class="type">float</span> findBlocker(<span class="type">sampler2D</span> shadowMap, <span class="type">vec2</span> uv, <span class="type">float</span> zReceiver) &#123;</span><br><span class="line">    <span class="comment">// Initialize average depth and number of blockers</span></span><br><span class="line">    <span class="type">float</span> averageDepth = <span class="number">0.0</span>;</span><br><span class="line">    <span class="type">int</span> numBlockers = <span class="number">0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Generate Poisson disk samples based on uv</span></span><br><span class="line">    poissonDiskSamples(uv);</span><br><span class="line">    <span class="comment">// Or generate uniform disk samples based on uv</span></span><br><span class="line"></span><br><span class="line">    <span class="comment">// Loop over all samples</span></span><br><span class="line">    <span class="keyword">for</span> (<span class="type">int</span> i = <span class="number">0</span>; i &lt; BLOCKER_SEARCH_NUM_SAMPLES; ++i) &#123;</span><br><span class="line">        <span class="comment">// Calculate offset for current sample</span></span><br><span class="line">        <span class="type">vec2</span> <span class="keyword">offset</span> = poissonDisk[i] * BLOCKER_SEARCH_RADIUS;</span><br><span class="line">        <span class="comment">// Sample depth from shadow map at the offset position</span></span><br><span class="line">        <span class="type">float</span> sampleDepth = <span class="built_in">texture2D</span>(shadowMap, uv + <span class="keyword">offset</span>).r;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// If the sampled depth is less than the receiver&#x27;s depth, it&#x27;s a blocker</span></span><br><span class="line">        <span class="keyword">if</span> (sampleDepth &lt; zReceiver) &#123;</span><br><span class="line">            <span class="comment">// Accumulate the depth of blockers</span></span><br><span class="line">            averageDepth += sampleDepth;</span><br><span class="line">            <span class="comment">// Increase the number of blockers</span></span><br><span class="line">            numBlockers++;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If no blockers found, return -1.0</span></span><br><span class="line">    <span class="keyword">if</span> (numBlockers == <span class="number">0</span>) <span class="keyword">return</span> <span class="number">-1.0</span>;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Return the average depth of blockers</span></span><br><span class="line">    <span class="keyword">return</span> averageDepth / <span class="type">float</span>(numBlockers);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>得到平均遮挡深度后，我们就可以根据课上的这个图来计算伴影的直径了。</p>
-<p><img src="/images/games202-assignment1/Untitled%205.png" alt="Untitled"></p>
-<p><img src="/images/games202-assignment1/Untitled%206.png" alt="Untitled"></p>
-<p>上面公式中，$d_{Receiver}$是fragment的深度，$d_{Blocker}$是我们刚刚求得的平均遮挡深度， $w_{light}$ 则是前面进行了人为的定义，由此我们可以得到<code>PCSS</code>的代码</p>
-<figure class="highlight glsl"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// phongFragment.glsl</span></span><br><span class="line"></span><br><span class="line"><span class="type">float</span> PCSS(<span class="type">sampler2D</span> shadowMap, <span class="type">vec4</span> shadowCoord) &#123;</span><br><span class="line">    <span class="comment">// Find the depth of the blocker</span></span><br><span class="line">    <span class="type">float</span> blockerDepth = findBlocker(shadowMap, shadowCoord.xy, shadowCoord.z);</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If no blocker is found, return full illumination</span></span><br><span class="line">    <span class="keyword">if</span> (blockerDepth == <span class="number">-1.0</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> <span class="number">1.0</span>;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Calculate the ratio of the penumbra (the part of a shadow where the light source is only partially blocked)</span></span><br><span class="line">    <span class="type">float</span> penumbraRatio = (shadowCoord.z - blockerDepth) / blockerDepth;</span><br><span class="line">    <span class="comment">// Calculate the size of the filter based on the penumbra ratio and the size of the light source in UV coordinates</span></span><br><span class="line">    <span class="type">float</span> filterSize = penumbraRatio * LIGHT_SIZE;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// Return the result of the Percentage-Closer Filtering (PCF) function</span></span><br><span class="line">    <span class="keyword">return</span> PCF(shadowMap, shadowCoord, filterSize);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p><img src="/images/games202-assignment1/Untitled%207.png" alt="Untitled"></p>
-<p>可以看到由近到远阴影产生了由硬到软的转变，至此PCSS算法实现完成。</p>
-
-      
-    </div>
-
-    
-    
-    
-
-    <footer class="post-footer">
-        <div class="post-eof"></div>
-      
-    </footer>
-  </article>
-</div>
-
-
-
-
-    
-
-
-<div class="post-block">
-  
-  
-
-  <article itemscope itemtype="http://schema.org/Article" class="post-content" lang="">
-    <link itemprop="mainEntityOfPage" href="http://vision.moe/2023/12/21/hello-world/">
-
-    <span hidden itemprop="author" itemscope itemtype="http://schema.org/Person">
-      <meta itemprop="image" content="/images/avatar.jpg">
-      <meta itemprop="name" content="SuikaPx">
-    </span>
-
-    <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
-      <meta itemprop="name" content="SuikaPx's Blog">
-      <meta itemprop="description" content="">
-    </span>
-
-    <span hidden itemprop="post" itemscope itemtype="http://schema.org/CreativeWork">
-      <meta itemprop="name" content="undefined | SuikaPx's Blog">
-      <meta itemprop="description" content="">
-    </span>
-      <header class="post-header">
-        <h2 class="post-title" itemprop="name headline">
-          <a href="/2023/12/21/hello-world/" class="post-title-link" itemprop="url">Hello World</a>
-        </h2>
-
-        <div class="post-meta-container">
-          <div class="post-meta">
-    <span class="post-meta-item">
-      <span class="post-meta-item-icon">
-        <i class="far fa-calendar"></i>
-      </span>
-      <span class="post-meta-item-text">Posted on</span>
-
-      <time title="Created: 2023-12-21 12:47:26" itemprop="dateCreated datePublished" datetime="2023-12-21T12:47:26+08:00">2023-12-21</time>
-    </span>
-
-  
-</div>
-
-        </div>
-      </header>
-
-    
-    
-    
-    <div class="post-body" itemprop="articleBody">
-          <p>Welcome to <a target="_blank" rel="noopener" href="https://hexo.io/">Hexo</a>! This is your very first post. Check <a target="_blank" rel="noopener" href="https://hexo.io/docs/">documentation</a> for more info. If you get any problems when using Hexo, you can find the answer in <a target="_blank" rel="noopener" href="https://hexo.io/docs/troubleshooting.html">troubleshooting</a> or you can ask me on <a target="_blank" rel="noopener" href="https://github.com/hexojs/hexo/issues">GitHub</a>.</p>
-<h2 id="Quick-Start"><a href="#Quick-Start" class="headerlink" title="Quick Start"></a>Quick Start</h2><h3 id="Create-a-new-post"><a href="#Create-a-new-post" class="headerlink" title="Create a new post"></a>Create a new post</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo new <span class="string">&quot;My New Post&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/writing.html">Writing</a></p>
-<h3 id="Run-server"><a href="#Run-server" class="headerlink" title="Run server"></a>Run server</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo server</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/server.html">Server</a></p>
-<h3 id="Generate-static-files"><a href="#Generate-static-files" class="headerlink" title="Generate static files"></a>Generate static files</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo generate</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/generating.html">Generating</a></p>
-<h3 id="Deploy-to-remote-sites"><a href="#Deploy-to-remote-sites" class="headerlink" title="Deploy to remote sites"></a>Deploy to remote sites</h3><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">$ hexo deploy</span><br></pre></td></tr></table></figure>
-
-<p>More info: <a target="_blank" rel="noopener" href="https://hexo.io/docs/one-command-deployment.html">Deployment</a></p>
-
+<p>在阅读过程中，如果存在任何疑问或建议，欢迎在评论区交流讨论。</p>
+          <!--noindex-->
+            <div class="post-button">
+              <a class="btn" href="/2023/12/21/games202-assignment1/#more" rel="contents">
+                Read more &raquo;
+              </a>
+            </div>
+          <!--/noindex-->
+        
       
     </div>
 
@@ -417,6 +268,12 @@
   
 
 
+
+
+  
+
+  <script class="next-config" data-name="enableMath" type="application/json">true</script><script class="next-config" data-name="mathjax" type="application/json">{"enable":true,"tags":"none","js":{"url":"https://cdnjs.cloudflare.com/ajax/libs/mathjax/3.2.2/es5/tex-mml-chtml.js","integrity":"sha256-MASABpB4tYktI2Oitl4t+78w/lyA+D7b/s9GEP0JOGI="}}</script>
+<script src="/js/third-party/math/mathjax.js"></script>
 
 
 
