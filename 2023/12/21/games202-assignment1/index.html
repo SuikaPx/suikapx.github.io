@@ -15,7 +15,7 @@
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" integrity="sha256-yIDrPSXHZdOZhAqiBP7CKzIwMQmRCJ8UeB8Jo17YC4o=" crossorigin="anonymous">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/3.1.1/animate.min.css" integrity="sha256-PR7ttpcvz8qrF57fur/yAx1qXMFJeJFiA6pSzWi0OIE=" crossorigin="anonymous">
 
-<script class="next-config" data-name="main" type="application/json">{"hostname":"vision.moe","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.19.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":false,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
+<script class="next-config" data-name="main" type="application/json">{"hostname":"vision.moe","root":"/","images":"/images","scheme":"Gemini","darkmode":false,"version":"8.19.1","exturl":false,"sidebar":{"position":"left","display":"post","padding":18,"offset":12},"copycode":{"enable":true,"style":null},"fold":{"enable":false,"height":500},"bookmark":{"enable":false,"color":"#222","save":"auto"},"mediumzoom":false,"lazyload":false,"pangu":true,"comments":{"style":"tabs","active":"gitalk","storage":true,"lazyload":false,"nav":null,"activeClass":"gitalk"},"stickytabs":false,"motion":{"enable":true,"async":false,"transition":{"menu_item":"fadeInDown","post_block":"fadeIn","post_header":"fadeInDown","post_body":"fadeInDown","coll_header":"fadeInLeft","sidebar":"fadeInUp"}},"i18n":{"placeholder":"Searching...","empty":"We didn't find any results for the search: ${query}","hits_time":"${hits} results found in ${time} ms","hits":"${hits} results found"}}</script><script src="/js/config.js"></script>
 
     <meta name="description" content="GAMES202 课程的作业难度相较于 GAMES101 有了显著提高，几乎花了我一整天的时间才将作业1完成。之后我阅读了几篇相关的解答文章，发现大家在算法的具体实现上存在差异。有些解答修改了函数接收的参数数量，我感觉这可能会与出题者的初衷不符。因此，我打算分享我自己的解题过程，力求尽可能贴合作业提供的函数构造方法，希望能给后续学习这门课程的同学们提供一个参考。 本篇文章将主要涵盖以下内容：">
 <meta property="og:type" content="article">
@@ -33,7 +33,7 @@
 <meta property="og:image" content="http://vision.moe/images/games202-assignment1/Untitled%206.png">
 <meta property="og:image" content="http://vision.moe/images/games202-assignment1/Untitled%207.png">
 <meta property="article:published_time" content="2023-12-21T06:21:05.000Z">
-<meta property="article:modified_time" content="2023-12-21T13:46:57.849Z">
+<meta property="article:modified_time" content="2023-12-22T11:48:36.838Z">
 <meta property="article:author" content="SuikaPx">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="http://vision.moe/images/games202-assignment1/Untitled.png">
@@ -138,10 +138,6 @@
 
         </div>
       </div>
-        <div class="back-to-top animated" role="button" aria-label="Back to top">
-          <i class="fa fa-arrow-up"></i>
-          <span>0%</span>
-        </div>
     </div>
 
     
@@ -189,9 +185,15 @@
         <i class="far fa-calendar"></i>
       </span>
       <span class="post-meta-item-text">Posted on</span>
-      
 
-      <time title="Created: 2023-12-21 14:21:05 / Modified: 21:46:57" itemprop="dateCreated datePublished" datetime="2023-12-21T14:21:05+08:00">2023-12-21</time>
+      <time title="Created: 2023-12-21 14:21:05" itemprop="dateCreated datePublished" datetime="2023-12-21T14:21:05+08:00">2023-12-21</time>
+    </span>
+    <span class="post-meta-item">
+      <span class="post-meta-item-icon">
+        <i class="far fa-calendar-check"></i>
+      </span>
+      <span class="post-meta-item-text">Edited on</span>
+      <time title="Modified: 2023-12-22 19:48:36" itemprop="dateModified" datetime="2023-12-22T19:48:36+08:00">2023-12-22</time>
     </span>
 
   
@@ -210,7 +212,7 @@
 <li>ShadowMap 算法的实现</li>
 <li>PCF 算法的实现</li>
 <li>PCSS 算法的实现</li>
-<li>提高：多光源和动态物体</li>
+<li>TODO：多光源和动态物体</li>
 <li>TODO：自适应 Bias 算法的实现</li>
 <li>TODO：VSSM 算法的实现</li>
 </ol>
@@ -419,6 +421,10 @@ alt="PCSS 算法实现效果" />
   </footer>
 
   
+  <div class="back-to-top" role="button" aria-label="Back to top">
+    <i class="fa fa-arrow-up fa-lg"></i>
+    <span>0%</span>
+  </div>
 
 <noscript>
   <div class="noscript-warning">Theme NexT works best with JavaScript enabled</div>
